@@ -8,9 +8,9 @@ public class Bullet {
 	
 	double v1, v2;
 	
-	private double width = 10;
+	static double width = 10;
 	
-	private double height = width;
+	double height = width;
 	
 	public Bullet (double x1, double y1) {
 		this.x1 = x1;
@@ -18,7 +18,7 @@ public class Bullet {
 	}
 	
 	public void paint(Graphics g) {
-		g.fillRect((int)x1, (int)y1, (int)width, (int)height);
+		g.fillOval((int)x1, (int)y1, (int)width, (int)height);
 	}
 	
 	

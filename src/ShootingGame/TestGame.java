@@ -37,7 +37,7 @@ public class TestGame implements MouseListener, MouseMotionListener, KeyListener
 
 	static ArrayList<Bullet> bullets = new ArrayList<Bullet>();
 
-	Player rectangle = new Player(250,150, 40, 40);
+	Player player = new Player(250,150, 40, 40);
 
 
 	DrawingPanel panelGame = new DrawingPanel();
@@ -54,7 +54,7 @@ public class TestGame implements MouseListener, MouseMotionListener, KeyListener
 		panelGame.addMouseListener(this);
 		panelGame.addMouseMotionListener(this);
 		panelGame.addKeyListener(this);
-//		frame.addKeyListener(this);
+		frame.addKeyListener(this);
 		frame.add(panelGame);
 
 		//		frame.setSize(PANW, PANH);
@@ -81,15 +81,16 @@ public class TestGame implements MouseListener, MouseMotionListener, KeyListener
 	void shooting() {
 		for (int i = 0 ; i < bullets.size() ; i++) {
 			Bullet b = bullets.get(i);
-			b.x1 -= b.v1;
-			b.y1 -= b.v2;
+			b.x1 += b.v1;
+			b.y1 += b.v2;
 		}
 	}
 
 	void moving() {
-		rectangle.x1 += rectangle.speedX;
-		rectangle.y1 += rectangle.speedY;
+		player.x1 += player.speedX;
+		player.y1 += player.speedY;
 	}
+	
 	class DrawingPanel extends JPanel {
 
 		DrawingPanel(){
@@ -103,8 +104,8 @@ public class TestGame implements MouseListener, MouseMotionListener, KeyListener
 			Graphics2D g2 = (Graphics2D) g;
 			g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
-			g.drawLine((int)(rectangle.x1+rectangle.width/2),(int)(rectangle.y1+rectangle.height/2), mx, my);
-			rectangle.paint(g);
+			g.drawLine((int)(player.x1+player.width/2),(int)(player.y1+player.height/2), mx, my);
+			player.paint(g);
 
 			for (int i = 0 ; i < bullets.size() ; i++) {
 				Bullet b = bullets.get(i);
@@ -117,29 +118,48 @@ public class TestGame implements MouseListener, MouseMotionListener, KeyListener
 	double getAngle(double x, double y) {
 		
 		double angle = 0;
+				
 		
-		if(x < rectangle.x1 && y < rectangle.y1) {
-			angle = Math.atan2(rectangle.y1-y, rectangle.x1-x);
+		if(x < player.x1+player.width/2 && y < player.y1+player.height/2) { // upper left
+			angle = Math.atan2((player.y1+player.height/2 + Bullet.width/2)-y, (player.x1+player.width/2 + Bullet.width/2)-x);
 		}
 		
-		if (x > rectangle.x1 && y < rectangle.y1){
-			angle = Math.atan2(rectangle.y1-y, x-rectangle.x1);
+		if (x > player.x1+player.width/2 && y > player.y1+player.height/2){ // lower right
+			angle = Math.atan2(y-(player.y1+player.height/2 + Bullet.width/2), x-(player.x1+player.width/2 + Bullet.width/2));
 		}
 		
-		if(x < rectangle.x1 && y > rectangle.y1) {
-			angle = Math.atan2(y - rectangle.y1, rectangle.x1-x);
+		if(x < player.x1+player.width/2 && y > player.y1+player.height/2) { // lower left
+			angle = Math.atan2(y - (player.y1+player.height/2 + Bullet.width/2), (player.x1+player.width/2 + Bullet.width/2) - x);
 		}
 		
-		if(x > rectangle.x1 && y < rectangle.y1) {
-			angle = Math.atan2(rectangle.y1 - y, x - rectangle.x1);
+		if(x > player.x1+player.width/2 && y < player.y1+player.height/2) { // upper right
+			angle = Math.atan2((player.y1+player.height/2 + Bullet.width/2) - y, x - (player.x1+player.width/2 + Bullet.width/2));
 		}
 		
 		return angle;
 		
 	}
 	
-	void setVelocity() {
-
+	void setVelocity(double x, double y, double angle, Bullet b) {
+		if(x < player.x1+player.width/2 && y < player.y1+player.height/2) { // upper left
+			b.v1 = -Math.cos(angle)*5;
+			b.v2 = -Math.sin(angle)*5;
+		}
+		
+		if (x > player.x1+player.width/2 && y > player.y1+player.height/2){ // lower right
+			b.v1 = Math.cos(angle)*5;
+			b.v2 = Math.sin(angle)*5;
+		}
+		
+		if(x < player.x1+player.width/2 && y > player.y1+player.height/2) { // lower left
+			b.v1 = -Math.cos(angle)*5;
+			b.v2 = Math.sin(angle)*5;
+		}
+		
+		if(x > player.x1+player.width/2 && y < player.y1+player.height/2) { // upper right
+			b.v1 = Math.cos(angle)*5;
+			b.v2 = -Math.sin(angle)*5;
+		}
 	}
 
 
@@ -167,10 +187,11 @@ public class TestGame implements MouseListener, MouseMotionListener, KeyListener
 		double angle = getAngle(x, y);
 		//Math.atan2(rectangle.y1-y, rectangle.x1-x)
 		
-		Bullet b = new Bullet(rectangle.x1+rectangle.width/2,rectangle.y1+rectangle.height/2);
+		Bullet b = new Bullet(player.x1+player.width/2,player.y1+player.height/2);
 
-		b.v1 = Math.cos(angle)*5;
-		b.v2 = Math.sin(angle)*5;
+		setVelocity(x,y,angle,b);
+	
+		
 		bullets.add(b);
 
 
@@ -204,16 +225,16 @@ public class TestGame implements MouseListener, MouseMotionListener, KeyListener
 
 		int key = e.getKeyChar();
 		if(key == 'w') {
-			rectangle.speedY = -5;
+			player.speedY = -5;
 		}
 		if(key == 'a') {
-			rectangle.speedX = -5;
+			player.speedX = -5;
 		}
 		if(key == 's') {
-			rectangle.speedY = 5;	
+			player.speedY = 5;	
 		}
 		if(key == 'd') {
-			rectangle.speedX = 5;	
+			player.speedX = 5;	
 		}
 
 		panelGame.repaint();
@@ -227,16 +248,16 @@ public class TestGame implements MouseListener, MouseMotionListener, KeyListener
 		int key = e.getKeyChar();
 		
 		if(key == 'w') {
-			rectangle.speedY = 0;
+			player.speedY = 0;
 		}
 		if(key == 'a') {
-			rectangle.speedX = 0;
+			player.speedX = 0;
 		}
 		if(key == 's') {
-			rectangle.speedY = 0;
+			player.speedY = 0;
 		}
 		if(key == 'd') {
-			rectangle.speedX = 0;
+			player.speedX = 0;
 		}
 
 		panelGame.repaint();
