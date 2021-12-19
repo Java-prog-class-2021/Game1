@@ -21,23 +21,29 @@ import javax.swing.Timer;
 
 
 
-public class TestGame implements MouseListener, MouseMotionListener, KeyListener{
+public class ShootingGame implements MouseListener, MouseMotionListener, KeyListener{
 
 	public static void main(String[] args) {
 		javax.swing.SwingUtilities.invokeLater(new Runnable() {
 			@Override
 			public void run() {
-				new TestGame(); 
+				new ShootingGame(); 
 			}
 		});
 	}
 
-	static final int PANW = 500;
-	static final int PANH = 300;
+	static final int PANW = 900;
+	static final int PANH = 500;
+
+	boolean generateEnemies = true;
 
 	static ArrayList<Bullet> bullets = new ArrayList<Bullet>();
 
-	Player player = new Player(250,150, 40, 40);
+	static ArrayList<Enemy> enemies = new ArrayList<Enemy>();
+
+	static ArrayList<Bullet> enemyBullets = new ArrayList<Bullet>();
+
+	Player player = new Player(PANW/2,PANH/2, 40, 40);
 
 
 	DrawingPanel panelGame = new DrawingPanel();
@@ -47,17 +53,19 @@ public class TestGame implements MouseListener, MouseMotionListener, KeyListener
 	JFrame frame;
 
 	Timer timer;
-	TestGame(){
+
+	int time = 0;
+
+	ShootingGame(){
 		frame = new JFrame();
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
 		panelGame.addMouseListener(this);
 		panelGame.addMouseMotionListener(this);
-		panelGame.addKeyListener(this);
 		frame.addKeyListener(this);
+
 		frame.add(panelGame);
 
-		//		frame.setSize(PANW, PANH);
 		frame.pack();
 		frame.setLocationRelativeTo(null);
 		frame.setVisible(true);		
@@ -71,9 +79,22 @@ public class TestGame implements MouseListener, MouseMotionListener, KeyListener
 
 		@Override
 		public void actionPerformed(ActionEvent e) {
+			time++;
 
-			shooting();
 			moving();
+			shooting();
+			enemyMovement();
+
+			if (enemies.size()==0) {
+				generateEnemies = true;
+			}
+
+			if(time%100 == 0) {
+				enemyBullets();
+			}
+
+			enemyShooting();
+			generateEnemies();
 			panelGame.repaint();
 		}
 	}
@@ -84,18 +105,69 @@ public class TestGame implements MouseListener, MouseMotionListener, KeyListener
 			b.x1 += b.v1;
 			b.y1 += b.v2;
 		}
+
+
+	}
+
+	void enemyBullets() {
+		double angle;
+		for(int i = 0 ; i < enemies.size() ; i++) {
+			Enemy e = enemies.get(i);
+			angle = getEnemyAngle(e.x1 + e.width/2, e.y1 + e.height/2);
+
+			Bullet b = new Bullet(e.x1 + e.width/2, e.y1 + e.height/2);
+			setVelocity(e.x1 + e.width/2, e.y1 + e.height/2, angle, b);
+
+			enemyBullets.add(b);
+		}
+	}
+
+	void enemyShooting () {
+		for(int i = 0 ; i < enemyBullets.size() ; i++) {
+			Bullet b = enemyBullets.get(i);
+			b.x1 -= b.v1;
+			b.y1 -= b.v2;
+		}
 	}
 
 	void moving() {
-		player.x1 += player.speedX;
-		player.y1 += player.speedY;
+
+		for(int i = 0 ; i < enemies.size() ; i++) {
+			Enemy e = enemies.get(i);
+			e.x1 -= player.speedX;
+			e.y1 -= player.speedY;
+		}
+
+		for(int i = 0 ; i < bullets.size() ; i++) {
+			Bullet b = bullets.get(i);
+			b.x1 -= player.speedX;
+			b.y1 -= player.speedY;
+		}
+
+		for(int i = 0 ; i < enemyBullets.size() ; i++) {
+			Bullet b = enemyBullets.get(i);
+			b.x1 -= player.speedX;
+			b.y1 -= player.speedY;
+		}
+
 	}
-	
+
+	void generateEnemies() {
+		if(generateEnemies) {
+			for(int x = 0 ; x < 5 ; x++) {
+				Enemy e = new Enemy();
+				enemies.add(e);
+			}
+			generateEnemies = false;
+		}
+	}
+
 	class DrawingPanel extends JPanel {
 
 		DrawingPanel(){
 			this.setPreferredSize(new Dimension(PANW, PANH));
-			this.setBackground(Color.white);
+			this.setBackground(new Color(210,105,30));
+			generateEnemies();
 		}
 
 		@Override
@@ -105,6 +177,7 @@ public class TestGame implements MouseListener, MouseMotionListener, KeyListener
 			g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
 			g.drawLine((int)(player.x1+player.width/2),(int)(player.y1+player.height/2), mx, my);
+
 			player.paint(g);
 
 			for (int i = 0 ; i < bullets.size() ; i++) {
@@ -112,50 +185,159 @@ public class TestGame implements MouseListener, MouseMotionListener, KeyListener
 				b.paint(g);
 			}
 
+			g.setColor(Color.orange);
+			for(int i = 0 ; i < enemies.size() ; i++) {
+				Enemy e = enemies.get(i);
+				e.paint(g);
+			}
+
+			g.setColor(Color.red);
+			for(int x = 0 ; x < enemyBullets.size() ; x++) {
+				Bullet b = enemyBullets.get(x);
+				b.paint(g);
+			}
+
+			checkEnemies();
+
 		}
 	}
-	
-	double getAngle(double x, double y) {
-		
-		double angle = 0;
-				
-		
-		if(x < player.x1+player.width/2 && y < player.y1+player.height/2) { // upper left
-			angle = Math.atan2((player.y1+player.height/2 + Bullet.width/2)-y, (player.x1+player.width/2 + Bullet.width/2)-x);
+
+	void enemyMovement() {
+		double angle;
+		for(int i = 0 ; i < enemies.size() ; i++) {
+			Enemy e = enemies.get(i);
+			angle = getEnemyAngle(e.x1, e.y1);
+			setVelocity(e.x1, e.y1, angle, e);
+			e.x1 -= e.v1;
+			e.y1 -= e.v2;
+
 		}
-		
+	}
+
+	void checkEnemies() {
+		for (int i = 0 ; i < bullets.size() ; i++) {
+			Bullet b = bullets.get(i);
+			for(int x = 0 ; x < enemies.size() ; x++) {
+				Enemy e = enemies.get(x);
+				if(b.x1 > e.x1 && b.x1 < e.x1 + e.width && 
+						b.y1 > e.y1 && b.y1 < e.y1 + e.height	) {
+					enemies.remove(x);
+					bullets.remove(i);
+				}
+
+			}
+		}
+
+		for (int i = 0 ; i < enemies.size() ; i++) {
+			Enemy e = enemies.get(i);
+
+			e.getCenterX();
+			e.getCenterY();
+
+			double n = Math.hypot(player.centerX-e.centerX, player.centerY-e.centerY);
+
+			if(n < player.width/2 + e.width/2) {
+				enemies.remove(i);
+			}
+
+		}
+
+		for(int i = 0 ; i < enemyBullets.size() ; i++) {
+			Bullet b = enemyBullets.get(i);
+			
+			if(b.x1 > player.x1 && b.x1 < player.x1 + player.width && 
+					b.y1 > player.y1 && b.y1 < player.y1 + player.height	) {
+				enemyBullets.remove(i);
+			}
+
+		}
+	}
+
+	double getEnemyAngle(double x, double y) {
+		double angle = 0;
+
+		if(x < player.x1+player.width/2 && y < player.y1+player.height/2) { // upper left
+			angle = Math.atan2(player.y1-y, player.x1-x);
+		}
+
 		if (x > player.x1+player.width/2 && y > player.y1+player.height/2){ // lower right
 			angle = Math.atan2(y-(player.y1+player.height/2 + Bullet.width/2), x-(player.x1+player.width/2 + Bullet.width/2));
 		}
-		
+
+		if(x < player.x1+player.width/2 && y > player.y1+player.height/2) { // lower left
+			angle = Math.atan2(y - (player.y1+player.height/2 + Bullet.width/2), player.x1 - x);
+		}
+
+		if(x > player.x1+player.width/2 && y < player.y1+player.height/2) { // upper right
+			angle = Math.atan2(player.y1 - y, x - (player.x1+player.width/2 + Bullet.width/2));
+		}
+
+		return angle;
+	}
+
+
+	double getAngle(double x, double y) {
+
+		double angle = 0;
+
+		if(x < player.x1+player.width/2 && y < player.y1+player.height/2) { // upper left
+			angle = Math.atan2((player.y1+player.height/2 + Bullet.width/2)-y, (player.x1+player.width/2 + Bullet.width/2)-x);
+		}
+
+		if (x > player.x1+player.width/2 && y > player.y1+player.height/2){ // lower right
+			angle = Math.atan2(y-(player.y1+player.height/2 + Bullet.width/2), x-(player.x1+player.width/2 + Bullet.width/2));
+		}
+
 		if(x < player.x1+player.width/2 && y > player.y1+player.height/2) { // lower left
 			angle = Math.atan2(y - (player.y1+player.height/2 + Bullet.width/2), (player.x1+player.width/2 + Bullet.width/2) - x);
 		}
-		
+
 		if(x > player.x1+player.width/2 && y < player.y1+player.height/2) { // upper right
 			angle = Math.atan2((player.y1+player.height/2 + Bullet.width/2) - y, x - (player.x1+player.width/2 + Bullet.width/2));
 		}
-		
+
 		return angle;
-		
+
 	}
-	
-	void setVelocity(double x, double y, double angle, Bullet b) {
+
+	void setVelocity(double x, double y, double angle, Enemy b) { //Set Enemy Velocity
+		if(x < player.x1+player.width/2 && y < player.y1+player.height/2) { // upper left
+			b.v1 = -Math.cos(angle)*2;
+			b.v2 = -Math.sin(angle)*2;
+		}
+
+		if (x > player.x1+player.width/2 && y > player.y1+player.height/2){ // lower right
+			b.v1 = Math.cos(angle)*2;
+			b.v2 = Math.sin(angle)*2;
+		}
+
+		if(x < player.x1+player.width/2 && y > player.y1+player.height/2) { // lower left
+			b.v1 = -Math.cos(angle)*2;
+			b.v2 = Math.sin(angle)*2;
+		}
+
+		if(x > player.x1+player.width/2 && y < player.y1+player.height/2) { // upper right
+			b.v1 = Math.cos(angle)*2;
+			b.v2 = -Math.sin(angle)*2;
+		}
+	}
+
+	void setVelocity(double x, double y, double angle, Bullet b) { // set Bullet Velocity
 		if(x < player.x1+player.width/2 && y < player.y1+player.height/2) { // upper left
 			b.v1 = -Math.cos(angle)*5;
 			b.v2 = -Math.sin(angle)*5;
 		}
-		
+
 		if (x > player.x1+player.width/2 && y > player.y1+player.height/2){ // lower right
 			b.v1 = Math.cos(angle)*5;
 			b.v2 = Math.sin(angle)*5;
 		}
-		
+
 		if(x < player.x1+player.width/2 && y > player.y1+player.height/2) { // lower left
 			b.v1 = -Math.cos(angle)*5;
 			b.v2 = Math.sin(angle)*5;
 		}
-		
+
 		if(x > player.x1+player.width/2 && y < player.y1+player.height/2) { // upper right
 			b.v1 = Math.cos(angle)*5;
 			b.v2 = -Math.sin(angle)*5;
@@ -185,17 +367,14 @@ public class TestGame implements MouseListener, MouseMotionListener, KeyListener
 		double y = e.getY();
 
 		double angle = getAngle(x, y);
-		//Math.atan2(rectangle.y1-y, rectangle.x1-x)
-		
+
 		Bullet b = new Bullet(player.x1+player.width/2,player.y1+player.height/2);
 
 		setVelocity(x,y,angle,b);
-	
-		
+
+
 		bullets.add(b);
 
-
-		panelGame.repaint();
 	}
 
 
@@ -237,7 +416,6 @@ public class TestGame implements MouseListener, MouseMotionListener, KeyListener
 			player.speedX = 5;	
 		}
 
-		panelGame.repaint();
 
 
 	}
@@ -246,7 +424,7 @@ public class TestGame implements MouseListener, MouseMotionListener, KeyListener
 	@Override
 	public void keyReleased(KeyEvent e) {
 		int key = e.getKeyChar();
-		
+
 		if(key == 'w') {
 			player.speedY = 0;
 		}
@@ -260,7 +438,6 @@ public class TestGame implements MouseListener, MouseMotionListener, KeyListener
 			player.speedX = 0;
 		}
 
-		panelGame.repaint();
 
 	}
 
