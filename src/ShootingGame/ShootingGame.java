@@ -2,6 +2,7 @@ package ShootingGame;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
@@ -44,7 +45,12 @@ public class ShootingGame implements MouseListener, MouseMotionListener, KeyList
 	static ArrayList<Bullet> enemyBullets = new ArrayList<Bullet>();
 
 	Player player = new Player(PANW/2,PANH/2, 40, 40);
-
+	
+	int health = 100;
+	
+	int healthBar;
+	
+	int round = 0;
 
 	DrawingPanel panelGame = new DrawingPanel();
 
@@ -71,6 +77,7 @@ public class ShootingGame implements MouseListener, MouseMotionListener, KeyList
 		frame.setVisible(true);		
 
 		timer = new Timer(10, new TimerAL());
+		timer.setInitialDelay(70);
 		timer.start();
 	}
 
@@ -95,6 +102,7 @@ public class ShootingGame implements MouseListener, MouseMotionListener, KeyList
 
 			enemyShooting();
 			generateEnemies();
+		
 			panelGame.repaint();
 		}
 	}
@@ -113,10 +121,10 @@ public class ShootingGame implements MouseListener, MouseMotionListener, KeyList
 		double angle;
 		for(int i = 0 ; i < enemies.size() ; i++) {
 			Enemy e = enemies.get(i);
-			angle = getEnemyAngle(e.x1 + e.width/2, e.y1 + e.height/2);
+			angle = getEnemyAngle(e.x1 + Enemy.width/2, e.y1 + Enemy.height/2);
 
-			Bullet b = new Bullet(e.x1 + e.width/2, e.y1 + e.height/2);
-			setVelocity(e.x1 + e.width/2, e.y1 + e.height/2, angle, b);
+			Bullet b = new Bullet(e.x1 + Enemy.width/2, e.y1 + Enemy.height/2);
+			setVelocity(e.x1 + Enemy.width/2, e.y1 + Enemy.height/2, angle, b);
 
 			enemyBullets.add(b);
 		}
@@ -154,14 +162,17 @@ public class ShootingGame implements MouseListener, MouseMotionListener, KeyList
 
 	void generateEnemies() {
 		if(generateEnemies) {
-			for(int x = 0 ; x < 5 ; x++) {
+			round++;
+			for(int x = 0 ; x < 3+(round-1)*3 ; x++) {
 				Enemy e = new Enemy();
 				enemies.add(e);
 			}
+			
 			generateEnemies = false;
 		}
 	}
-
+	
+	
 	class DrawingPanel extends JPanel {
 
 		DrawingPanel(){
@@ -175,6 +186,7 @@ public class ShootingGame implements MouseListener, MouseMotionListener, KeyList
 			super.paintComponent(g);
 			Graphics2D g2 = (Graphics2D) g;
 			g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+			healthBar = health;
 
 			g.drawLine((int)(player.x1+player.width/2),(int)(player.y1+player.height/2), mx, my);
 
@@ -184,6 +196,16 @@ public class ShootingGame implements MouseListener, MouseMotionListener, KeyList
 				Bullet b = bullets.get(i);
 				b.paint(g);
 			}
+			
+			g.setFont(new Font ("TimesRoman", Font.BOLD, 24));
+			g.drawString("Round: " + round, PANW-(30+24*5), 30);
+			g.drawString("Health: " + health, 30, 30);
+			
+			if(healthBar<=0) {
+				healthBar=0;
+			}
+			g.setColor(new Color(225-healthBar*2,25+healthBar*2,25));
+			g.fillRect(180, 10, (int)(healthBar*1.5), 23);
 
 			g.setColor(Color.orange);
 			for(int i = 0 ; i < enemies.size() ; i++) {
@@ -195,6 +217,13 @@ public class ShootingGame implements MouseListener, MouseMotionListener, KeyList
 			for(int x = 0 ; x < enemyBullets.size() ; x++) {
 				Bullet b = enemyBullets.get(x);
 				b.paint(g);
+			}
+			
+			if(health <= 0) {
+				timer.stop();
+				g.setColor(Color.black);
+				g.setFont(new Font ("TimesRoman", Font.BOLD, 100));
+				g.drawString("Game Over!", PANW/5, PANH/2);
 			}
 
 			checkEnemies();
@@ -219,8 +248,8 @@ public class ShootingGame implements MouseListener, MouseMotionListener, KeyList
 			Bullet b = bullets.get(i);
 			for(int x = 0 ; x < enemies.size() ; x++) {
 				Enemy e = enemies.get(x);
-				if(b.x1 > e.x1 && b.x1 < e.x1 + e.width && 
-						b.y1 > e.y1 && b.y1 < e.y1 + e.height	) {
+				if(b.x1 > e.x1 && b.x1 < e.x1 + Enemy.width && 
+						b.y1 > e.y1 && b.y1 < e.y1 + Enemy.height	) {
 					enemies.remove(x);
 					bullets.remove(i);
 				}
@@ -236,7 +265,8 @@ public class ShootingGame implements MouseListener, MouseMotionListener, KeyList
 
 			double n = Math.hypot(player.centerX-e.centerX, player.centerY-e.centerY);
 
-			if(n < player.width/2 + e.width/2) {
+			if(n < player.width/2 + Enemy.width/2) {
+				health -= 10;
 				enemies.remove(i);
 			}
 
@@ -247,6 +277,7 @@ public class ShootingGame implements MouseListener, MouseMotionListener, KeyList
 			
 			if(b.x1 > player.x1 && b.x1 < player.x1 + player.width && 
 					b.y1 > player.y1 && b.y1 < player.y1 + player.height	) {
+				health -= 5;
 				enemyBullets.remove(i);
 			}
 
@@ -320,7 +351,80 @@ public class ShootingGame implements MouseListener, MouseMotionListener, KeyList
 			b.v1 = Math.cos(angle)*2;
 			b.v2 = -Math.sin(angle)*2;
 		}
+		
+		
+		for(int i = 0 ; i < enemies.size() ; i++) {
+			Enemy e1 = enemies.get(i);
+			e1.getCenterX();
+			e1.getCenterY();
+			for(int p = 0 ; p < enemies.size(); p++) {
+				Enemy e2 = enemies.get(p);
+				e2.getCenterX();
+				e2.getCenterY();
+
+				if(p!=i) {
+//					System.out.println(Math.hypot(e1.centerX - e2.centerX, e1.centerY - e2.centerY));
+					if(Math.hypot(e1.centerX - e2.centerX, e1.centerY - e2.centerY) < Enemy.width + 5) {
+						
+//						e1.v1 = e2.v1;
+//						e1.v2 = e2.v2;
+		
+						if(e1.v1 > 0 && e2.v1 > 0) {
+							if(e1.v1 > e2.v1) {
+								e1.v1 = 0;
+							}
+							else {
+								e2.v1 = 0;
+							}
+						}
+						else if(e1.v1 < 0 && e2.v1 < 0) {
+							if(e1.v1 < e2.v1) {
+								e1.v1 = 0;
+							}
+							else {
+								e2.v1 = 0;
+							}	
+						}
+						else if(e1.v1 < 0 && e2.v1 > 0) {
+							e1.v1 = e2.v1;
+						}
+						else if(e1.v1 > 0 && e2.v1 < 0) {
+							e2.v1 = e1.v1;
+						}
+						
+						if(e1.v2 > 0 && e2.v2 > 0) {
+							if(e1.v2 > e2.v2) {
+								e1.v2 = 0;
+							}
+							else {
+								e2.v2 = 0;
+							}
+						}
+						else if(e1.v2 < 0 && e2.v2 < 0) {
+							if(e1.v2 < e2.v2) {
+								e1.v2 = 0;
+							}
+							else {
+								e2.v2 = 0;
+							}	
+						}
+						else if(e1.v2 < 0 && e2.v2 > 0) {
+							e1.v2 = e2.v2;
+						}
+						else if(e1.v2 > 0 && e2.v2 < 0) {
+							e2.v2 = e1.v2;
+						}
+						
+					}
+
+					
+				}
+			}
+			
+		}
 	}
+	
+	
 
 	void setVelocity(double x, double y, double angle, Bullet b) { // set Bullet Velocity
 		if(x < player.x1+player.width/2 && y < player.y1+player.height/2) { // upper left

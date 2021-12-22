@@ -6,7 +6,9 @@ public class Enemy {
 	
 	double x1, y1;
 	
-	double width = 25, height = 25;
+	static double width = 25;
+
+	static double height = 25;
 	
 	double v1 = 0, v2 = 0;
 	
