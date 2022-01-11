@@ -1,16 +1,27 @@
 package ShootingGame;
 
 import java.awt.Graphics;
+import java.awt.Image;
+import java.io.InputStream;
+import java.net.URL;
+
+import javax.swing.ImageIcon;
+import javax.swing.JOptionPane;
 
 public class Enemy {
 
 	double x1, y1;
 
-	static double width = 25;
+	static double width = 40;
 
-	static double height = 25;
+	static double height = 40;
 
 	double v1 = 0, v2 = 0;
+	
+	
+	String filename = "enemy trooper.gif";
+	
+	Image imgSoilder = loadImage(filename);
 
 	double centerX, centerY;
 
@@ -37,5 +48,32 @@ public class Enemy {
 
 	public void paint(Graphics g) {
 		g.fillOval((int)x1, (int)y1, (int)width, (int)height);
+	}
+	
+	Image loadImage(String filename) {
+		Image image = null;
+		
+		URL imageURL = this.getClass().getResource("/" + filename); 
+		
+		InputStream inputStr = ShootingGame.class.getClassLoader().getResourceAsStream(filename);
+		
+		if (imageURL != null) {
+			ImageIcon icon = new ImageIcon(imageURL);				
+			image = icon.getImage();
+		} else {
+			JOptionPane.showMessageDialog(null, "An image failed to load: " + filename , "ERROR", JOptionPane.ERROR_MESSAGE);
+		}
+		
+		return image;
+		
+	}
+	
+	public void paintImg(Graphics g) {
+		
+		int imgW = imgSoilder.getWidth(null);
+		int imgH = imgSoilder.getHeight(null);
+		
+		g.drawImage(imgSoilder, (int)x1, (int)y1, (int)(x1+width), (int)(y1+height),   
+					0, 0, imgW, imgH, null);
 	}
 }

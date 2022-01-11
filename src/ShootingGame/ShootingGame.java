@@ -1,7 +1,8 @@
 package ShootingGame;
 
 import java.awt.BasicStroke;
-import java.awt.BorderLayout;
+import java.awt.Image;
+import javax.swing.ImageIcon;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
@@ -13,13 +14,17 @@ import java.awt.Color;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
+import java.io.InputStream;
+import java.net.URL;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.util.ArrayList;
 
 import javax.swing.JFrame;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.Timer;
+
 
 
 
@@ -48,6 +53,8 @@ public class ShootingGame implements MouseListener, MouseMotionListener, KeyList
 	Player player = new Player(PANW/2,PANH/2, 40, 40);
 
 	Border border = new Border(-PANW, -PANH, 3*PANW, 3*PANH);
+	
+//	Image imgSoilder;
 
 	int health = 100;
 
@@ -74,7 +81,10 @@ public class ShootingGame implements MouseListener, MouseMotionListener, KeyList
 		frame.addKeyListener(this);
 
 		frame.add(panelGame);
-
+		
+//		String filename = "enemy trooper.gif";
+//		imgSoilder = loadImage(filename);
+		
 		frame.pack();
 		frame.setLocationRelativeTo(null);
 		frame.setVisible(true);		
@@ -140,6 +150,25 @@ public class ShootingGame implements MouseListener, MouseMotionListener, KeyList
 			b.y1 -= b.v2;
 		}
 	}
+	
+	//first import example within main class
+//	Image loadImage(String filename) {
+//		Image image = null;
+//		
+//		URL imageURL = this.getClass().getResource("/" + filename); 
+//		
+//		InputStream inputStr = ShootingGame.class.getClassLoader().getResourceAsStream(filename);
+//		
+//		if (imageURL != null) {
+//			ImageIcon icon = new ImageIcon(imageURL);				
+//			image = icon.getImage();
+//		} else {
+//			JOptionPane.showMessageDialog(null, "An image failed to load: " + filename , "ERROR", JOptionPane.ERROR_MESSAGE);
+//		}
+//		
+//		return image;
+//		
+//	}
 
 	void moving() {
 
@@ -236,7 +265,9 @@ public class ShootingGame implements MouseListener, MouseMotionListener, KeyList
 			g.setColor(Color.orange);
 			for(int i = 0 ; i < enemies.size() ; i++) {
 				Enemy e = enemies.get(i);
-				e.paint(g);
+				//e.paint(g);
+				
+				e.paintImg(g);
 			}
 
 			g.setColor(Color.red);
@@ -247,12 +278,12 @@ public class ShootingGame implements MouseListener, MouseMotionListener, KeyList
 
 			//check for game over
 			//only for actual game
-			//			if(health <= 0) {
-			//				timer.stop();
-			//				g.setColor(Color.black);
-			//				g.setFont(new Font ("TimesRoman", Font.BOLD, 100));
-			//				g.drawString("Game Over!", PANW/5, PANH/2);
-			//			}
+//						if(health <= 0) {
+//							timer.stop();
+//							g.setColor(Color.black);
+//							g.setFont(new Font ("TimesRoman", Font.BOLD, 100));
+//							g.drawString("Game Over!", PANW/5, PANH/2);
+//						}
 			checkBullets();
 			checkEnemies();
 			
