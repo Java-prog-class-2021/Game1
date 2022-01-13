@@ -16,7 +16,11 @@ public class Enemy {
 
 	static double height = 40;
 
-	double v1 = 0, v2 = 0;
+	double speedX, speedY;
+	
+	double v1per, v2per;
+	
+	double health;
 	
 	
 	String filename = "enemy trooper.gif";
@@ -24,8 +28,12 @@ public class Enemy {
 	Image imgSoilder = loadImage(filename);
 
 	double centerX, centerY;
+	
+	public Enemy() {
+		
+	}
 
-	public Enemy (double Xrange, double Yrange, double x, double y) {
+	void Enemy1 (double Xrange, double Yrange, double x, double y) {
 		x1 = (double)(Math.random()*Xrange+x-width);
 		y1 = (double)(Math.random()*Yrange+y-height);
 
@@ -36,6 +44,25 @@ public class Enemy {
 		while (y1 > ShootingGame.PANH/2 - 50 && y1 < ShootingGame.PANH/2 + 50) {
 			y1 = (double)(Math.random()*Yrange-Math.abs(y)-height);
 		}
+		
+		v1per = 2;
+		v2per = 2;
+		health = 1;
+	}
+	
+	void Enemy2 (double Xrange, double Yrange, double x, double y) {
+		x1 = (double)(Math.random()*Xrange+x-width);
+		y1 = (double)(Math.random()*Yrange+y-height);
+
+		while (x1 > ShootingGame.PANW/2 - 50 && x1 < ShootingGame.PANW/2 + 50) {
+			x1 = (double)(Math.random()*Xrange-Math.abs(x)-width);
+		}
+
+		while (y1 > ShootingGame.PANH/2 - 50 && y1 < ShootingGame.PANH/2 + 50) {
+			y1 = (double)(Math.random()*Yrange-Math.abs(y)-height);
+		}
+		v1per = 4;
+		v2per = 4;
 	}
 
 	void getCenterX(){
