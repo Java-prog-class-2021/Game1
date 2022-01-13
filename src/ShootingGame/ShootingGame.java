@@ -40,7 +40,9 @@ public class ShootingGame implements MouseListener, MouseMotionListener, KeyList
 	}
 
 	static final int PANW = 900;
-	static final int PANH = 500;
+	static final int PANH = 600;
+
+	final double SPEED = 5;
 
 	boolean generateEnemies = true;
 
@@ -53,8 +55,8 @@ public class ShootingGame implements MouseListener, MouseMotionListener, KeyList
 	Player player = new Player(PANW/2,PANH/2, 40, 40);
 
 	Border border = new Border(-PANW, -PANH, 3*PANW, 3*PANH);
-	
-//	Image imgSoilder;
+
+	//	Image imgSoilder;
 
 	int health = 100;
 
@@ -81,10 +83,10 @@ public class ShootingGame implements MouseListener, MouseMotionListener, KeyList
 		frame.addKeyListener(this);
 
 		frame.add(panelGame);
-		
-//		String filename = "enemy trooper.gif";
-//		imgSoilder = loadImage(filename);
-		
+
+		//		String filename = "enemy trooper.gif";
+		//		imgSoilder = loadImage(filename);
+
 		frame.pack();
 		frame.setLocationRelativeTo(null);
 		frame.setVisible(true);		
@@ -102,25 +104,27 @@ public class ShootingGame implements MouseListener, MouseMotionListener, KeyList
 			time++;
 
 			moving();
-			shooting();
+			playerShooting();
 			enemyMovement();
+			generateEnemies();
 
 			if (enemies.size()==0) {
 				generateEnemies = true;
 			}
 
 			if(time%100 == 0) {
-				enemyBullets();
+				generateEnemyBullets();
 			}
 
 			enemyShooting();
-			generateEnemies();
+
 
 			panelGame.repaint();
 		}
 	}
 
-	void shooting() {
+	//method for player's bullets movement
+	void playerShooting() {
 		for (int i = 0 ; i < bullets.size() ; i++) {
 			Bullet b = bullets.get(i);
 			b.x1 += b.v1;
@@ -130,19 +134,31 @@ public class ShootingGame implements MouseListener, MouseMotionListener, KeyList
 
 	}
 
-	void enemyBullets() {
+	//method for generating enemy bullets
+	void generateEnemyBullets() {
 		double angle;
+
+		//create bullets and their properties(angle, speed)
 		for(int i = 0 ; i < enemies.size() ; i++) {
 			Enemy e = enemies.get(i);
-			angle = getEnemyAngle(e.x1 + Enemy.width/2, e.y1 + Enemy.height/2);
 
-			Bullet b = new Bullet(e.x1 + Enemy.width/2, e.y1 + Enemy.height/2);
-			setVelocity(e.x1 + Enemy.width/2, e.y1 + Enemy.height/2, angle, b);
+			e.getCenterX();
+			e.getCenterY();
 
-			enemyBullets.add(b);
+			if(Math.hypot(e.centerX - player.centerX, player.centerY - e.centerY) < PANW/2) {			
+				angle = getEnemyAngle(e.x1 + Enemy.width/2, e.y1 + Enemy.height/2);
+
+				Bullet b = new Bullet();
+				b.enemyBullet(e.x1 + Enemy.width/2, e.y1 + Enemy.height/2);
+				setVelocity(e.x1 + Enemy.width/2, e.y1 + Enemy.height/2, angle, b);
+
+				enemyBullets.add(b);
+			}
+
 		}
 	}
 
+	//enemy bullets movement
 	void enemyShooting () {
 		for(int i = 0 ; i < enemyBullets.size() ; i++) {
 			Bullet b = enemyBullets.get(i);
@@ -150,26 +166,8 @@ public class ShootingGame implements MouseListener, MouseMotionListener, KeyList
 			b.y1 -= b.v2;
 		}
 	}
-	
-	//first import example within main class
-//	Image loadImage(String filename) {
-//		Image image = null;
-//		
-//		URL imageURL = this.getClass().getResource("/" + filename); 
-//		
-//		InputStream inputStr = ShootingGame.class.getClassLoader().getResourceAsStream(filename);
-//		
-//		if (imageURL != null) {
-//			ImageIcon icon = new ImageIcon(imageURL);				
-//			image = icon.getImage();
-//		} else {
-//			JOptionPane.showMessageDialog(null, "An image failed to load: " + filename , "ERROR", JOptionPane.ERROR_MESSAGE);
-//		}
-//		
-//		return image;
-//		
-//	}
 
+	//method for player's movement where player is located in the center
 	void moving() {
 
 		if(player.x1 <= border.x1 && player.speedX<0) {
@@ -212,9 +210,18 @@ public class ShootingGame implements MouseListener, MouseMotionListener, KeyList
 	void generateEnemies() {
 		if(generateEnemies) {
 			round++;
-			for(int x = 0 ; x < 3+(round-1)*3 ; x++) {
-				Enemy e = new Enemy(border.width, border.height, border.x1, border.y1);
+			for(int x = 0 ; x < 2+(round-1)*2 ; x++) {
+				Enemy e = new Enemy();
+				e.Enemy1(border.width, border.height, border.x1, border.y1);
 				enemies.add(e);
+			}
+
+			if(round>=3) {
+				for(int x = 0 ; x < 1+(round-3)*2 ; x++) {
+					Enemy e = new Enemy();
+					e.Enemy2(border.width, border.height, border.x1, border.y1);
+					enemies.add(e);
+				}
 			}
 
 			generateEnemies = false;
@@ -266,7 +273,7 @@ public class ShootingGame implements MouseListener, MouseMotionListener, KeyList
 			for(int i = 0 ; i < enemies.size() ; i++) {
 				Enemy e = enemies.get(i);
 				//e.paint(g);
-				
+
 				e.paintImg(g);
 			}
 
@@ -278,15 +285,16 @@ public class ShootingGame implements MouseListener, MouseMotionListener, KeyList
 
 			//check for game over
 			//only for actual game
-//						if(health <= 0) {
-//							timer.stop();
-//							g.setColor(Color.black);
-//							g.setFont(new Font ("TimesRoman", Font.BOLD, 100));
-//							g.drawString("Game Over!", PANW/5, PANH/2);
-//						}
-			checkBullets();
-			checkEnemies();
-			
+			//						if(health <= 0) {
+			//							timer.stop();
+			//							g.setColor(Color.black);
+			//							g.setFont(new Font ("TimesRoman", Font.BOLD, 100));
+			//							g.drawString("Game Over!", PANW/5, PANH/2);
+			//						}
+			checkBorderBullets();
+			damage();
+			eliminatedEnemies();
+
 		}
 	}
 
@@ -302,7 +310,29 @@ public class ShootingGame implements MouseListener, MouseMotionListener, KeyList
 		}
 	}
 
-	void checkBullets(){
+	void checkBorderBullets(){
+		for(int i = 0 ; i < enemyBullets.size() ; i++) {
+			Bullet b = enemyBullets.get(i);
+
+			if(b.x1 + Bullet.width >= border.x1+border.width || b.x1 <= border.x1 
+					|| b.y1 + Bullet.height  > border.y1+border.height || b.y1 < border.y1) {
+				enemyBullets.remove(i);
+
+			}
+		}
+
+		for(int x = 0 ; x < bullets.size() ; x++) {
+			Bullet b = bullets.get(x);
+			if(b.x1 + Bullet.width>= border.x1+border.width || b.x1 <= border.x1 
+					|| b.y1 + Bullet.height > border.y1+border.height || b.y1 < border.y1) {
+				bullets.remove(x);
+
+			}
+
+		}
+	}
+
+	void damage() {
 		for(int i = 0 ; i < enemyBullets.size() ; i++) {
 			Bullet b = enemyBullets.get(i);
 
@@ -312,36 +342,6 @@ public class ShootingGame implements MouseListener, MouseMotionListener, KeyList
 				enemyBullets.remove(i);
 			}
 
-			if(b.x1 + Bullet.width >= border.x1+border.width || b.x1 <= border.x1 
-					|| b.y1 + Bullet.height  > border.y1+border.height || b.y1 < border.y1) {
-				enemyBullets.remove(i);
-
-			}
-		}
-		
-		for(int x = 0 ; x < bullets.size() ; x++) {
-			Bullet b = bullets.get(x);
-			if(b.x1 + Bullet.width>= border.x1+border.width || b.x1 <= border.x1 
-					|| b.y1 + Bullet.height > border.y1+border.height || b.y1 < border.y1) {
-				bullets.remove(x);
-
-			}
-			
-		}
-	}
-
-	void checkEnemies() {
-		for (int i = 0 ; i < bullets.size() ; i++) {
-			Bullet b = bullets.get(i);
-			for(int x = 0 ; x < enemies.size() ; x++) {
-				Enemy e = enemies.get(x);
-				if(b.x1 > e.x1 && b.x1 < e.x1 + Enemy.width && 
-						b.y1 > e.y1 && b.y1 < e.y1 + Enemy.height	) {
-					enemies.remove(x);
-					bullets.remove(i);
-				}
-
-			}
 		}
 
 		for (int i = 0 ; i < enemies.size() ; i++) {
@@ -361,267 +361,284 @@ public class ShootingGame implements MouseListener, MouseMotionListener, KeyList
 
 	}
 
-
-double getEnemyAngle(double x, double y) {
-	double angle = 0;
-
-	if(x < player.x1+player.width/2 && y < player.y1+player.height/2) { // upper left
-		angle = Math.atan2(player.y1-y, player.x1-x);
-	}
-
-	if (x > player.x1+player.width/2 && y > player.y1+player.height/2){ // lower right
-		angle = Math.atan2(y-(player.y1+player.height/2 + Bullet.width/2), x-(player.x1+player.width/2 + Bullet.width/2));
-	}
-
-	if(x < player.x1+player.width/2 && y > player.y1+player.height/2) { // lower left
-		angle = Math.atan2(y - (player.y1+player.height/2 + Bullet.width/2), player.x1 - x);
-	}
-
-	if(x > player.x1+player.width/2 && y < player.y1+player.height/2) { // upper right
-		angle = Math.atan2(player.y1 - y, x - (player.x1+player.width/2 + Bullet.width/2));
-	}
-
-	return angle;
-}
-
-
-double getAngle(double x, double y) {
-
-	double angle = 0;
-
-	if(x < player.x1+player.width/2 && y < player.y1+player.height/2) { // upper left
-		angle = Math.atan2((player.y1+player.height/2 + Bullet.width/2)-y, (player.x1+player.width/2 + Bullet.width/2)-x);
-	}
-
-	if (x > player.x1+player.width/2 && y > player.y1+player.height/2){ // lower right
-		angle = Math.atan2(y-(player.y1+player.height/2 + Bullet.width/2), x-(player.x1+player.width/2 + Bullet.width/2));
-	}
-
-	if(x < player.x1+player.width/2 && y > player.y1+player.height/2) { // lower left
-		angle = Math.atan2(y - (player.y1+player.height/2 + Bullet.width/2), (player.x1+player.width/2 + Bullet.width/2) - x);
-	}
-
-	if(x > player.x1+player.width/2 && y < player.y1+player.height/2) { // upper right
-		angle = Math.atan2((player.y1+player.height/2 + Bullet.width/2) - y, x - (player.x1+player.width/2 + Bullet.width/2));
-	}
-
-	return angle;
-
-}
-
-void setVelocity(double x, double y, double angle, Enemy b) { //Set Enemy Velocity
-	if(x < player.x1+player.width/2 && y < player.y1+player.height/2) { // upper left
-		b.v1 = -Math.cos(angle)*2;
-		b.v2 = -Math.sin(angle)*2;
-	}
-
-	if (x > player.x1+player.width/2 && y > player.y1+player.height/2){ // lower right
-		b.v1 = Math.cos(angle)*2;
-		b.v2 = Math.sin(angle)*2;
-	}
-
-	if(x < player.x1+player.width/2 && y > player.y1+player.height/2) { // lower left
-		b.v1 = -Math.cos(angle)*2;
-		b.v2 = Math.sin(angle)*2;
-	}
-
-	if(x > player.x1+player.width/2 && y < player.y1+player.height/2) { // upper right
-		b.v1 = Math.cos(angle)*2;
-		b.v2 = -Math.sin(angle)*2;
-	}
-
-
-	for(int i = 0 ; i < enemies.size() ; i++) {
-		Enemy e1 = enemies.get(i);
-		e1.getCenterX();
-		e1.getCenterY();
-		for(int p = 0 ; p < enemies.size(); p++) {
-			Enemy e2 = enemies.get(p);
-			e2.getCenterX();
-			e2.getCenterY();
-
-			if(p!=i) {
-				//					System.out.println(Math.hypot(e1.centerX - e2.centerX, e1.centerY - e2.centerY));
-				if(Math.hypot(e1.centerX - e2.centerX, e1.centerY - e2.centerY) < Enemy.width + 5) {
-
-					//						e1.v1 = e2.v1;
-					//						e1.v2 = e2.v2;
-
-					if(e1.v1 > 0 && e2.v1 > 0) {
-						if(e1.v1 > e2.v1) {
-							e1.v1 = 0;
-						}
-						else {
-							e2.v1 = 0;
-						}
-					}
-					else if(e1.v1 < 0 && e2.v1 < 0) {
-						if(e1.v1 < e2.v1) {
-							e1.v1 = 0;
-						}
-						else {
-							e2.v1 = 0;
-						}	
-					}
-					else if(e1.v1 < 0 && e2.v1 > 0) {
-						e1.v1 = e2.v1;
-					}
-					else if(e1.v1 > 0 && e2.v1 < 0) {
-						e2.v1 = e1.v1;
-					}
-
-					if(e1.v2 > 0 && e2.v2 > 0) {
-						if(e1.v2 > e2.v2) {
-							e1.v2 = 0;
-						}
-						else {
-							e2.v2 = 0;
-						}
-					}
-					else if(e1.v2 < 0 && e2.v2 < 0) {
-						if(e1.v2 < e2.v2) {
-							e1.v2 = 0;
-						}
-						else {
-							e2.v2 = 0;
-						}	
-					}
-					else if(e1.v2 < 0 && e2.v2 > 0) {
-						e1.v2 = e2.v2;
-					}
-					else if(e1.v2 > 0 && e2.v2 < 0) {
-						e2.v2 = e1.v2;
-					}
-
+	void eliminatedEnemies() {
+		for (int i = 0 ; i < bullets.size() ; i++) {
+			Bullet b = bullets.get(i);
+			for(int x = 0 ; x < enemies.size() ; x++) {
+				Enemy e = enemies.get(x);
+				if(b.x1 > e.x1 && b.x1 < e.x1 + Enemy.width && 
+						b.y1 > e.y1 && b.y1 < e.y1 + Enemy.height	) {
+					enemies.remove(x);
+					bullets.remove(i);
 				}
-
 
 			}
 		}
 
-	}
-}
 
-
-
-void setVelocity(double x, double y, double angle, Bullet b) { // set Bullet Velocity
-	if(x < player.x1+player.width/2 && y < player.y1+player.height/2) { // upper left
-		b.v1 = -Math.cos(angle)*5;
-		b.v2 = -Math.sin(angle)*5;
-	}
-
-	if (x > player.x1+player.width/2 && y > player.y1+player.height/2){ // lower right
-		b.v1 = Math.cos(angle)*5;
-		b.v2 = Math.sin(angle)*5;
-	}
-
-	if(x < player.x1+player.width/2 && y > player.y1+player.height/2) { // lower left
-		b.v1 = -Math.cos(angle)*5;
-		b.v2 = Math.sin(angle)*5;
-	}
-
-	if(x > player.x1+player.width/2 && y < player.y1+player.height/2) { // upper right
-		b.v1 = Math.cos(angle)*5;
-		b.v2 = -Math.sin(angle)*5;
-	}
-}
-
-
-/* ACTIONLISTNER*/
-@Override
-public void mouseDragged(MouseEvent e) {
-	// TODO Auto-generated method stub
-
-}
-
-
-@Override
-public void mouseMoved(MouseEvent e) {
-	mx = e.getX();
-	my = e.getY();
-	panelGame.repaint();
-}
-
-
-@Override
-public void mouseClicked(MouseEvent e) {
-	double x = e.getX();
-	double y = e.getY();
-
-	double angle = getAngle(x, y);
-
-	Bullet b = new Bullet(player.x1+player.width/2,player.y1+player.height/2);
-
-	setVelocity(x,y,angle,b);
-
-
-	bullets.add(b);
-
-}
-
-
-@Override
-public void mousePressed(MouseEvent e) {	}
-
-
-@Override
-public void mouseReleased(MouseEvent e) {	}
-
-
-@Override
-public void mouseEntered(MouseEvent e) {	}
-
-
-@Override
-public void mouseExited(MouseEvent e) {	}
-
-
-@Override
-public void keyTyped(KeyEvent e) {	}
-
-
-
-@Override
-public void keyPressed(KeyEvent e) {
-
-	int key = e.getKeyChar();
-	if(key == 'w') {
-		player.speedY = -5;
-	}
-	if(key == 'a') {
-		player.speedX = -5;
-	}
-	if(key == 's') {
-		player.speedY = 5;	
-	}
-	if(key == 'd') {
-		player.speedX = 5;	
 	}
 
 
+	double getEnemyAngle(double x, double y) {
+		double angle = 0;
 
-}
+		if(x < player.x1+player.width/2 && y < player.y1+player.height/2) { // upper left
+			angle = Math.atan2(player.y1-y, player.x1-x);
+		}
 
+		if (x > player.x1+player.width/2 && y > player.y1+player.height/2){ // lower right
+			angle = Math.atan2(y-(player.y1+player.height/2 + Bullet.width/2), x-(player.x1+player.width/2 + Bullet.width/2));
+		}
 
-@Override
-public void keyReleased(KeyEvent e) {
-	int key = e.getKeyChar();
+		if(x < player.x1+player.width/2 && y > player.y1+player.height/2) { // lower left
+			angle = Math.atan2(y - (player.y1+player.height/2 + Bullet.width/2), player.x1 - x);
+		}
 
-	if(key == 'w') {
-		player.speedY = 0;
+		if(x > player.x1+player.width/2 && y < player.y1+player.height/2) { // upper right
+			angle = Math.atan2(player.y1 - y, x - (player.x1+player.width/2 + Bullet.width/2));
+		}
+
+		return angle;
 	}
-	if(key == 'a') {
-		player.speedX = 0;
+
+
+	double getAngle(double x, double y) {
+
+		double angle = 0;
+
+		if(x < player.x1+player.width/2 && y < player.y1+player.height/2) { // upper left
+			angle = Math.atan2((player.y1+player.height/2 + Bullet.width/2)-y, (player.x1+player.width/2 + Bullet.width/2)-x);
+		}
+
+		if (x > player.x1+player.width/2 && y > player.y1+player.height/2){ // lower right
+			angle = Math.atan2(y-(player.y1+player.height/2 + Bullet.width/2), x-(player.x1+player.width/2 + Bullet.width/2));
+		}
+
+		if(x < player.x1+player.width/2 && y > player.y1+player.height/2) { // lower left
+			angle = Math.atan2(y - (player.y1+player.height/2 + Bullet.width/2), (player.x1+player.width/2 + Bullet.width/2) - x);
+		}
+
+		if(x > player.x1+player.width/2 && y < player.y1+player.height/2) { // upper right
+			angle = Math.atan2((player.y1+player.height/2 + Bullet.width/2) - y, x - (player.x1+player.width/2 + Bullet.width/2));
+		}
+
+		return angle;
+
 	}
-	if(key == 's') {
-		player.speedY = 0;
-	}
-	if(key == 'd') {
-		player.speedX = 0;
+
+	void setVelocity(double x, double y, double angle, Enemy e) { //Set Enemy Velocity
+		if(x < player.x1+player.width/2 && y < player.y1+player.height/2) { // upper left
+			e.v1 = -Math.cos(angle)*e.v1per;
+			e.v2 = -Math.sin(angle)*e.v2per;
+		}
+
+		if (x > player.x1+player.width/2 && y > player.y1+player.height/2){ // lower right
+			e.v1 = Math.cos(angle)*e.v1per;
+			e.v2 = Math.sin(angle)*e.v2per;
+		}
+
+		if(x < player.x1+player.width/2 && y > player.y1+player.height/2) { // lower left
+			e.v1 = -Math.cos(angle)*e.v1per;
+			e.v2 = Math.sin(angle)*e.v2per;
+		}
+
+		if(x > player.x1+player.width/2 && y < player.y1+player.height/2) { // upper right
+			e.v1 = Math.cos(angle)*e.v1per;
+			e.v2 = -Math.sin(angle)*e.v2per;
+		}
+
+
+		for(int i = 0 ; i < enemies.size() ; i++) {
+			Enemy e1 = enemies.get(i);
+			e1.getCenterX();
+			e1.getCenterY();
+			for(int p = 0 ; p < enemies.size(); p++) {
+				Enemy e2 = enemies.get(p);
+				e2.getCenterX();
+				e2.getCenterY();
+
+				if(p!=i) {
+					//					System.out.println(Math.hypot(e1.centerX - e2.centerX, e1.centerY - e2.centerY));
+					if(Math.hypot(e1.centerX - e2.centerX, e1.centerY - e2.centerY) < Enemy.width + 5) {
+
+						//						e1.v1 = e2.v1;
+						//						e1.v2 = e2.v2;
+
+						if(e1.v1 > 0 && e2.v1 > 0) {
+							if(e1.v1 > e2.v1) {
+								e1.v1 = 0;
+							}
+							else {
+								e2.v1 = 0;
+							}
+						}
+						else if(e1.v1 < 0 && e2.v1 < 0) {
+							if(e1.v1 < e2.v1) {
+								e1.v1 = 0;
+							}
+							else {
+								e2.v1 = 0;
+							}	
+						}
+						else if(e1.v1 < 0 && e2.v1 > 0) {
+							e1.v1 = e2.v1;
+						}
+						else if(e1.v1 > 0 && e2.v1 < 0) {
+							e2.v1 = e1.v1;
+						}
+
+						if(e1.v2 > 0 && e2.v2 > 0) {
+							if(e1.v2 > e2.v2) {
+								e1.v2 = 0;
+							}
+							else {
+								e2.v2 = 0;
+							}
+						}
+						else if(e1.v2 < 0 && e2.v2 < 0) {
+							if(e1.v2 < e2.v2) {
+								e1.v2 = 0;
+							}
+							else {
+								e2.v2 = 0;
+							}	
+						}
+						else if(e1.v2 < 0 && e2.v2 > 0) {
+							e1.v2 = e2.v2;
+						}
+						else if(e1.v2 > 0 && e2.v2 < 0) {
+							e2.v2 = e1.v2;
+						}
+
+					}
+
+
+				}
+			}
+
+		}
 	}
 
 
-}
+
+	void setVelocity(double x, double y, double angle, Bullet b) { // set Bullet Velocity
+		if(x < player.x1+player.width/2 && y < player.y1+player.height/2) { // upper left
+			b.v1 = -Math.cos(angle)*b.v1per;
+			b.v2 = -Math.sin(angle)*b.v2per;
+		}
+
+		if (x > player.x1+player.width/2 && y > player.y1+player.height/2){ // lower right
+			b.v1 = Math.cos(angle)*b.v1per;
+			b.v2 = Math.sin(angle)*b.v2per;
+		}
+
+		if(x < player.x1+player.width/2 && y > player.y1+player.height/2) { // lower left
+			b.v1 = -Math.cos(angle)*b.v1per;
+			b.v2 = Math.sin(angle)*b.v2per;
+		}
+
+		if(x > player.x1+player.width/2 && y < player.y1+player.height/2) { // upper right
+			b.v1 = Math.cos(angle)*b.v1per;
+			b.v2 = -Math.sin(angle)*b.v2per;
+		}
+	}
+
+
+	/* ACTIONLISTNER*/
+	@Override
+	public void mouseDragged(MouseEvent e) {
+		// TODO Auto-generated method stub
+
+	}
+
+
+	@Override
+	public void mouseMoved(MouseEvent e) {
+		mx = e.getX();
+		my = e.getY();
+		panelGame.repaint();
+	}
+
+
+	@Override
+	public void mouseClicked(MouseEvent e) {
+		double x = e.getX();
+		double y = e.getY();
+
+		double angle = getAngle(x, y);
+
+		Bullet b = new Bullet(player.x1+player.width/2,player.y1+player.height/2);
+
+		setVelocity(x,y,angle,b);
+
+
+		bullets.add(b);
+
+	}
+
+
+	@Override
+	public void mousePressed(MouseEvent e) {	}
+
+
+	@Override
+	public void mouseReleased(MouseEvent e) {	}
+
+
+	@Override
+	public void mouseEntered(MouseEvent e) {	}
+
+
+	@Override
+	public void mouseExited(MouseEvent e) {	}
+
+
+	@Override
+	public void keyTyped(KeyEvent e) {	}
+
+
+
+	@Override
+	public void keyPressed(KeyEvent e) {
+
+		int key = e.getKeyChar();
+		if(key == 'w') {
+			player.speedY = -SPEED;
+		}
+		if(key == 'a') {
+			player.speedX = -SPEED;
+		}
+		if(key == 's') {
+			player.speedY = SPEED;	
+		}
+		if(key == 'd') {
+			player.speedX = SPEED;	
+		}
+
+
+
+	}
+
+
+	@Override
+	public void keyReleased(KeyEvent e) {
+		int key = e.getKeyChar();
+
+		if(key == 'w') {
+			player.speedY = 0;
+		}
+		if(key == 'a') {
+			player.speedX = 0;
+		}
+		if(key == 's') {
+			player.speedY = 0;
+		}
+		if(key == 'd') {
+			player.speedX = 0;
+		}
+
+
+	}
 
 
 
