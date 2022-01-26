@@ -56,6 +56,8 @@ public class ShootingGame implements MouseListener, MouseMotionListener, KeyList
 
 	static ArrayList<Bullet> enemyBullets = new ArrayList<Bullet>();
 
+	static ArrayList<Obstacle> obstacles = new ArrayList<Obstacle>();
+
 	//Player declaration
 	Player player = new Player(PANW/2,PANH/2, 40, 40);
 
@@ -64,10 +66,10 @@ public class ShootingGame implements MouseListener, MouseMotionListener, KeyList
 
 	//Player health
 	int health = 100;
-	
+
 	//Player healthBar to draw the value
 	int healthBar;
-	
+
 	//Enemy shooting rate
 	int ENEMYSHOOTINGRATE = 100;
 
@@ -98,6 +100,8 @@ public class ShootingGame implements MouseListener, MouseMotionListener, KeyList
 		frame.setLocationRelativeTo(null);
 		frame.setVisible(true);		
 
+		//		generateObstacles();
+
 		timer = new Timer(10, new TimerAL());
 		timer.setInitialDelay(70);
 		timer.start();
@@ -114,6 +118,7 @@ public class ShootingGame implements MouseListener, MouseMotionListener, KeyList
 			playerShooting();
 			enemyMovement();
 			generateEnemies();
+
 
 			//if enemies are eliminated, set generateEnemies to true to respawn 
 			if (enemies.size()==0) {
@@ -132,6 +137,16 @@ public class ShootingGame implements MouseListener, MouseMotionListener, KeyList
 			panelGame.repaint();
 		}
 	}//end for Timer Class
+
+	void generateObstacles() {
+		Obstacle o1 = new Obstacle(-PANW/2, -PANH/2, 400, 200);
+		Obstacle o2 = new Obstacle(-50, PANH-80, 350, 300);
+		Obstacle o3 = new Obstacle(PANW+50, PANH/2, 300, 200);
+
+		obstacles.add(o1);
+		obstacles.add(o2);
+		obstacles.add(o3);
+	}
 
 	//method for player's bullets movement
 	void playerShooting() {
@@ -177,10 +192,8 @@ public class ShootingGame implements MouseListener, MouseMotionListener, KeyList
 		}
 	}//end for enemyShooting method
 
-	//method for player's movement where player is located in the center
-	//therefore this method codes for the movement for objects not the player
-	void moving() {
-
+	//prevent from going outside the border
+	void borderCollision() {
 		//if player reaches the border
 		//player's speed change to 0
 		if(player.x1 <= border.x1 && player.speedX<0) {
@@ -196,10 +209,61 @@ public class ShootingGame implements MouseListener, MouseMotionListener, KeyList
 		if(player.y1+player.height >= border.y1+border.height && player.speedY>0) {
 			player.speedY = 0;
 		}
+	}//end of borderCollision method
+
+	//prevent from getting into the obstacles
+	void obstaclesCollision() {
+		//if player reaches the border
+		//player's speed change to 0
+		for (int i = 0 ; i < obstacles.size() ; i++) {
+			Obstacle o = obstacles.get(i);
+
+			if(player.x1 < o.x + o.w && player.x1 + player.width > o.x
+					&& player.y1+player.height > o.y && player.y1 < o.y && player.speedY > 0) {
+				player.speedY = 0;
+			}
+
+			if(player.x1 < o.x + o.w && player.x1 + player.width> o.x
+					&& player.y1 < o.y + o.h && player.y1 + player.height > o.y + o.h && player.speedY < 0) {
+				player.speedY = 0;
+			}
+
+			if(player.y1 < o.y + o.h && player.y1 + player.height> o.y
+					&& player.x1 + player.width > o.x && player.x1 < o.x && player.speedX > 0) {
+				player.speedX = 0;
+			}
+
+			if(player.y1 < o.y + o.h && player.y1 + player.height> o.y
+					&& player.x1 < o.x + o.w && player.x1 + player.width > o.x + o.w && player.speedX < 0) {
+				player.speedX = 0;
+			}
+		}
+	}//end of obstaclesCollision method
+
+	//method for player's movement where player is located in the center
+	//therefore this method codes for the movement for objects not the player
+	void moving() {
+
+		borderCollision();
+		obstaclesCollision();
+
+
 
 		//border moving
 		border.x1 -= player.speedX;
 		border.y1 -= player.speedY;
+
+		//		for(int i = 0 ; i < obstacles.size() ; i++) {
+		//			Obstacle o = obstacles.get(i);
+		//			o.x -= player.speedX;
+		//			o.y -= player.speedY;
+		//		}
+
+		for(int i = 0 ; i < obstacles.size() ; i++) {
+			Obstacle o = obstacles.get(i);
+			o.x -= player.speedX;
+			o.y-= player.speedY;
+		}
 
 		//enemies moving
 		for(int i = 0 ; i < enemies.size() ; i++) {
@@ -223,6 +287,21 @@ public class ShootingGame implements MouseListener, MouseMotionListener, KeyList
 		}
 
 	}//end of moving method
+
+
+	//	void generateObstacles() {
+	//		// 30-80
+	//		int amountofobs = (int) (Math.random() * 30 + 50);
+	//		for (int i = 0; i < amountofobs; i++) {
+	//			int randWidth = (int) ((Math.random() * 3) + 1);
+	//			int randHeight = (int) ((Math.random() * 2) + 1);
+	//			int posX = (int) (Math.random()*(3*PANW)+(-PANW)-(40*randWidth));
+	//			int posY = (int) (Math.random()*(3*PANH)+(-PANH)-(40*randHeight));
+	//			Obstacle ob = new Obstacle(posX, posY, 40*randWidth, 40*randHeight);
+	//			
+	//			obstacles.add(ob);
+	//		}
+	//	}
 
 	void generateEnemies() {
 		if(generateEnemies) {
@@ -255,6 +334,7 @@ public class ShootingGame implements MouseListener, MouseMotionListener, KeyList
 			this.setPreferredSize(new Dimension(PANW, PANH));
 			this.setBackground(new Color(210,105,30));
 			generateEnemies();
+			generateObstacles();
 		}
 
 		@Override
@@ -269,12 +349,27 @@ public class ShootingGame implements MouseListener, MouseMotionListener, KeyList
 			//draw player
 			player.paint(g);
 
+
+			//			for (int i = 0 ; i < obstacles.size() ; i++) {
+			//				Obstacle o = obstacles.get(i);
+			//				o.paint(g);
+			//			}
+
+
+
 			for (int i = 0 ; i < bullets.size() ; i++) {
 				Bullet b = bullets.get(i);
 				b.paint(g);
 			}
 
+			g2.setStroke(new BasicStroke(1));
+			for (int i = 0 ; i < obstacles.size() ; i++) {
+				Obstacle o = obstacles.get(i);
+				o.paint(g);
+			}
+
 			//draw information of rounds and health
+			g.setColor(Color.BLACK);
 			g.setFont(new Font ("TimesRoman", Font.BOLD, 24));
 			g.drawString("Round: " + round, PANW-(30+24*5), 30);
 			g.drawString("Health: " + health, 30, 30);
@@ -293,8 +388,10 @@ public class ShootingGame implements MouseListener, MouseMotionListener, KeyList
 			g.setColor(new Color(225-healthBar*2,25+healthBar*2,25));
 			g.fillRect(180, 10, (int)(healthBar*1.5), 23);
 
+
 			//draw Enemies
 			g.setColor(Color.orange);
+			g2.setStroke(new BasicStroke(1));
 			for(int i = 0 ; i < enemies.size() ; i++) {
 				Enemy e = enemies.get(i);
 				//e.paint(g);
@@ -311,13 +408,13 @@ public class ShootingGame implements MouseListener, MouseMotionListener, KeyList
 
 			//check for game over
 			//only for actual game
-									if(health <= 0) {
-										timer.stop();
-										g.setColor(Color.black);
-										g.setFont(new Font ("TimesRoman", Font.BOLD, 100));
-										g.drawString("Game Over!", PANW/5, PANH/2);
-									}
-			checkBorderBullets();
+			//						if(health <= 0) {
+			//							timer.stop();
+			//							g.setColor(Color.black);
+			//							g.setFont(new Font ("TimesRoman", Font.BOLD, 100));
+			//							g.drawString("Game Over!", PANW/5, PANH/2);
+			//						}
+			checkCollisionBullets();
 			damage();
 			eliminatedEnemies();
 
@@ -338,8 +435,8 @@ public class ShootingGame implements MouseListener, MouseMotionListener, KeyList
 	}//end for enemyMovement method
 
 	//method to make sure bullets do not cross the border
-	void checkBorderBullets(){
-		
+	void checkCollisionBullets(){
+
 		//enemy bullets
 		for(int i = 0 ; i < enemyBullets.size() ; i++) {
 			Bullet b = enemyBullets.get(i);
@@ -347,6 +444,15 @@ public class ShootingGame implements MouseListener, MouseMotionListener, KeyList
 			if(b.x1 + Bullet.width >= border.x1+border.width || b.x1 <= border.x1 
 					|| b.y1 + Bullet.height  > border.y1+border.height || b.y1 < border.y1) {
 				enemyBullets.remove(i);
+			}
+
+			for(int x = 0 ; x < obstacles.size() ; x++) {
+				Obstacle o = obstacles.get(x);
+
+				if(b.x1 + Bullet.width >= o.x && b.x1 <= o.x + o.w
+						&& b.y1 + Bullet.height >= o.y && b.y1 <= o.y + o.h) {
+					enemyBullets.remove(i);
+				}
 
 			}
 		}
@@ -357,11 +463,21 @@ public class ShootingGame implements MouseListener, MouseMotionListener, KeyList
 			if(b.x1 + Bullet.width>= border.x1+border.width || b.x1 <= border.x1 
 					|| b.y1 + Bullet.height > border.y1+border.height || b.y1 < border.y1) {
 				bullets.remove(x);
+			}
+
+			for(int i = 0 ; i < obstacles.size() ; i++) {
+				Obstacle o = obstacles.get(i);
+
+				if(b.x1 + Bullet.width >= o.x && b.x1 <= o.x + o.w
+						&& b.y1 + Bullet.height >= o.y && b.y1 <= o.y + o.h) {
+					bullets.remove(x);
+				}
 
 			}
 
 		}
 	}//end for checkBorderBullets method
+
 
 	//method to take out player's health
 	void damage() {
@@ -465,8 +581,136 @@ public class ShootingGame implements MouseListener, MouseMotionListener, KeyList
 
 	}//end for getAngle method
 
+
+	void enemyFindRoute(Enemy e) {
+		e.getCenterX();
+		e.getCenterY();
+
+		double speed1 = 4.5;
+		double speed2 = -4.5;
+
+
+		if(e.speedY == 0) {
+			if(player.centerX < e.centerX) {
+				e.speedX = speed1;
+			}
+			else {
+				e.speedX = speed2;
+			}
+			System.out.println("2"+e.speedX);
+		}
+
+		if (e.speedX == 0){
+			if(player.centerY < e.centerY) {
+				e.speedY = speed1;
+			}
+			else {
+
+				e.speedY = speed2;
+			}
+			System.out.println("1"+e.speedY);
+		}
+
+	}
+	
+	void method1 (Enemy e, Obstacle o) {
+		if(e.y1 < o.y + o.h && e.y1 + Enemy.height> o.y) {
+
+			if( e.x1 + Enemy.width >= o.x && e.x1 <= o.x && e.speedX < 0) {
+				e.x1 = o.x - Enemy.width;
+				e.speedX = 0;
+				enemyFindRoute(e);
+			}
+
+			if(e.x1 <= o.x + o.w && e.x1 + Enemy.width >= o.x + o.w && e.speedX > 0) {
+				e.x1 = o.x + o.w;
+				e.speedX = 0;
+				enemyFindRoute(e);
+			}
+			
+		}
+		
+		if(e.x1 < o.x + o.w && e.x1 + Enemy.width > o.x) {
+
+			if(e.y1+Enemy.height >= o.y && e.y1 <= o.y && e.speedY < 0) {
+				e.y1 = o.y - Enemy.height;
+				e.speedY = 0;
+				enemyFindRoute(e);
+			}
+			if(e.y1 <= o.y + o.h && e.y1 + Enemy.height >= o.y + o.h && e.speedY > 0) {
+				e.y1 = o.y + o.h;
+				e.speedY = 0;
+				enemyFindRoute(e);
+			}
+		}
+	}
+	
+	void method2 (Enemy e, Obstacle o) {
+		if(e.x1 < o.x + o.w && e.x1 + Enemy.width > o.x) {
+
+			if(e.y1+Enemy.height >= o.y && e.y1 <= o.y && e.speedY < 0) {
+				e.y1 = o.y - Enemy.height;
+				e.speedY = 0;
+				enemyFindRoute(e);
+			}
+			if(e.y1 <= o.y + o.h && e.y1 + Enemy.height >= o.y + o.h && e.speedY > 0) {
+				e.y1 = o.y + o.h;
+				e.speedY = 0;
+				enemyFindRoute(e);
+			}
+		}
+		if(e.y1 < o.y + o.h && e.y1 + Enemy.height> o.y) {
+
+			if( e.x1 + Enemy.width >= o.x && e.x1 <= o.x && e.speedX < 0) {
+				e.x1 = o.x - Enemy.width;
+				e.speedX = 0;
+				enemyFindRoute(e);
+			}
+
+			if(e.x1 <= o.x + o.w && e.x1 + Enemy.width >= o.x + o.w && e.speedX > 0) {
+				e.x1 = o.x + o.w;
+				e.speedX = 0;
+				enemyFindRoute(e);
+			}
+			
+		}
+	}
+
+	void obstaclesEnemyCollision() {
+		//if player reaches the border
+		//player's speed change to 0
+		for (int i = 0 ; i < obstacles.size() ; i++) {
+			Obstacle o = obstacles.get(i);
+
+			for(int x = 0; x < enemies.size(); x++) {
+				Enemy e = enemies.get(x);
+				
+				if(e.y1 + Enemy.height >= o.y || e.y1 <= o.y + o.h) {
+					if(e.x1 < o.x + o.w && e.x1 + Enemy.width > o.x && Math.abs(e.speedY)>Math.abs(e.speedX))
+					method1(e,o);
+				}
+
+				if(e.x1 + Enemy.width >= o.x || e.x1 <= o.x + o.w) {
+					if(e.y1 + Enemy.height > o.y && e.y1 < o.y + o.h && Math.abs(e.speedY)<Math.abs(e.speedX))
+					method2(e,o);
+				}
+
+			}
+		}
+	}//end of obstaclesCollision method
+
 	//method to set enemy movement speed
 	void setEnemyVelocity(double x, double y, double angle, Enemy e) { //Set Enemy Velocity
+
+		double temp = 0;
+
+		if(e.speedX == 0) {
+			temp = e.speedY;
+		}
+		if(e.speedY == 0) {
+			temp = e.speedX;
+		}
+
 		if(x < player.x1+player.width/2 && y < player.y1+player.height/2) { // if the player is located on its upper left
 			e.speedX = -Math.cos(angle)*e.v1per;
 			e.speedY = -Math.sin(angle)*e.v2per;
@@ -488,15 +732,29 @@ public class ShootingGame implements MouseListener, MouseMotionListener, KeyList
 		}
 
 
+		obstaclesEnemyCollision();
+
+		if(e.speedX==0) {
+			if(temp!=e.speedY)
+				if(temp == 4.5 || temp == -4.5)
+					e.speedY=temp;
+		}
+
+		if(e.speedY==0) {
+			if(temp!=e.speedX)
+				if(temp == 4.5 || temp == -4.5)
+					e.speedX=temp;
+		}
+
 		//the rest of the part is the prevention of enemies' overlapping
 		for(int i = 0 ; i < enemies.size() ; i++) {
 			Enemy e1 = enemies.get(i);
-			
+
 			Rectangle r1 = new Rectangle((int)e1.x1, (int)e1.y1, (int)Enemy.width, (int)Enemy.height);
 			for(int p = 0 ; p < enemies.size(); p++) {
 				Enemy e2 = enemies.get(p);
 				Rectangle r2 = new Rectangle((int)e2.x1, (int)e2.y1, (int)Enemy.width, (int)Enemy.height);
-				
+
 
 				//prevent from comparing with itself
 				if(p!=i) {
@@ -525,7 +783,7 @@ public class ShootingGame implements MouseListener, MouseMotionListener, KeyList
 						 * 		Since they may run in the opposite direction, make their
 						 * speedX or speedY be the same to prevent overlapping 
 						 **************************************************************/
-						
+
 						if(e1.speedX > 0 && e2.speedX > 0) {
 							if(e1.speedX > e2.speedX) {
 								e1.speedX = 0;
@@ -675,8 +933,13 @@ public class ShootingGame implements MouseListener, MouseMotionListener, KeyList
 			player.speedX = SPEED;	
 		}
 
+		if(key == 't') {
+			timer.stop();
+		}
 
-
+		if(key == 'u') {
+			timer.restart();
+		}
 	}
 
 

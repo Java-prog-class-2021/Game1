@@ -22,7 +22,7 @@ public class Player {
 	
 	
 	public void paint(Graphics g) {
-		g.fillOval((int)x1, (int)y1, (int)width, (int)height);
+		g.drawRect((int)x1, (int)y1, (int)width, (int)height);
 	}
 	
 	

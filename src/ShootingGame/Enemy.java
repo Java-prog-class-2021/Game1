@@ -75,6 +75,7 @@ public class Enemy {
 
 	public void paint(Graphics g) {
 		g.fillOval((int)x1, (int)y1, (int)width, (int)height);
+		g.drawRect((int)x1, (int)y1, (int)width, (int)height);
 	}
 	
 	Image loadImage(String filename) {
@@ -102,5 +103,6 @@ public class Enemy {
 		
 		g.drawImage(imgSoilder, (int)x1, (int)y1, (int)(x1+width), (int)(y1+height),   
 					0, 0, imgW, imgH, null);
+		g.drawRect((int)x1, (int)y1, (int)width, (int)height);
 	}
 }
