@@ -9,6 +9,10 @@ public class Player {
 	
 	double centerX, centerY;
 	
+	String filename = "main player.png";
+	
+	Image imgPlayer = loadImage(filename);
+	
 	
 	public Player (double x1, double y1, double x2, double y2){
 		this.x1=x1;
