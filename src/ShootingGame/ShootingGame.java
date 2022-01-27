@@ -396,7 +396,7 @@ public class ShootingGame implements MouseListener, MouseMotionListener, KeyList
 				Enemy e = enemies.get(i);
 				//e.paint(g);
 
-				e.paintImg(g);
+				e.paintImg2(g);
 			}
 
 			//draw enemies' bullets
