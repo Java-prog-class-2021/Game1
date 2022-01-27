@@ -21,8 +21,31 @@ public class Player {
 	}
 	
 	
-	public void paint(Graphics g) {
-		g.drawRect((int)x1, (int)y1, (int)width, (int)height);
+	Image loadImage(String filename) {
+		Image image = null;
+
+		URL imageURL = this.getClass().getResource("/" + filename);
+
+		InputStream inputStr = ShootingGame.class.getClassLoader().getResourceAsStream(filename);
+
+		if (imageURL != null) {
+			ImageIcon icon = new ImageIcon(imageURL);
+			image = icon.getImage();
+		} else {
+			JOptionPane.showMessageDialog(null, "An image failed to load: " + filename, "ERROR",
+					JOptionPane.ERROR_MESSAGE);
+		}
+
+		return image;
+	}
+
+	public void paintImg(Graphics g) {
+
+		int imgW = imgPlayer.getWidth(null);
+		int imgH = imgPlayer.getHeight(null);
+
+		g.drawImage(imgPlayer, (int) x1, (int) y1, (int) (x1 + width), (int) (y1 + height), 0, 0, imgW, imgH, null);
+		g.drawRect((int) x1, (int) y1, (int) width, (int) height);
 	}
 	
 	
