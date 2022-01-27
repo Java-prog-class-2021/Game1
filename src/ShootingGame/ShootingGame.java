@@ -347,7 +347,7 @@ public class ShootingGame implements MouseListener, MouseMotionListener, KeyList
 			g.drawLine((int)(player.x1+player.width/2),(int)(player.y1+player.height/2), mx, my);
 
 			//draw player
-			player.paint(g);
+			player.paintImg(g);
 
 
 			//			for (int i = 0 ; i < obstacles.size() ; i++) {
