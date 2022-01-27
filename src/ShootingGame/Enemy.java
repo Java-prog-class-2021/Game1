@@ -96,7 +96,7 @@ public class Enemy {
 		
 	}
 	
-	public void paintImg(Graphics g) {
+	public void paintImg2(Graphics g) {
 		
 		int imgW = imgSoilder.getWidth(null);
 		int imgH = imgSoilder.getHeight(null);
