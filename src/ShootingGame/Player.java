@@ -7,25 +7,49 @@ public class Player {
 	
 	double speedX = 0, speedY = 0;
 	
+	String filename = "main player.png";
+	
+	Image imgPlayer = loadImage(filename);
+	
+	double centerX, centerY;
+	
 	public Player (double x1, double y1, double x2, double y2){
 		this.x1=x1;
 		this.y1=y1;
 		width=x2;
 		height=y2;
+		
+		centerX = x1 + width / 2;
+		centerY = y1 + height / 2;
 	}
 	
 	
-	public void paint(Graphics g) {
-		g.fillRect((int)x1, (int)y1, (int)width, (int)height);
+	Image loadImage(String filename) {
+		Image image = null;
+
+		URL imageURL = this.getClass().getResource("/" + filename);
+
+		InputStream inputStr = ShootingGame.class.getClassLoader().getResourceAsStream(filename);
+
+		if (imageURL != null) {
+			ImageIcon icon = new ImageIcon(imageURL);
+			image = icon.getImage();
+		} else {
+			JOptionPane.showMessageDialog(null, "An image failed to load: " + filename, "ERROR",
+					JOptionPane.ERROR_MESSAGE);
+		}
+
+		return image;
 	}
 	
-//	void setSpeedX(int n) {
-//		speedX = n;
-//	}
-//	
-//	void setSpeedY(int n) {
-//		speedY = n;
-//	}
+	public void paintImg(Graphics g) {
+
+		int imgW = imgPlayer.getWidth(null);
+		int imgH = imgPlayer.getHeight(null);
+
+		g.drawImage(imgPlayer, (int) x1, (int) y1, (int) (x1 + width), (int) (y1 + height), 0, 0, imgW, imgH, null);
+		g.drawRect((int) x1, (int) y1, (int) width, (int) height);
+	}
 
 	
 	
