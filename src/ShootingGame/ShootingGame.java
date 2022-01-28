@@ -356,10 +356,10 @@ public class ShootingGame implements MouseListener, MouseMotionListener, KeyList
 			//			}
 
 
-
+			// players bullets
 			for (int i = 0 ; i < bullets.size() ; i++) {
 				Bullet b = bullets.get(i);
-				b.paint(g);
+				b.paintImg3(g);
 			}
 
 			g2.setStroke(new BasicStroke(1));
